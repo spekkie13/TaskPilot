@@ -1,0 +1,104 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String          @id @default(cuid())
+  name          String?
+  email         String?         @unique
+  emailVerified DateTime?
+  image         String?
+  // Your other fields…
+  habits        Habit[]
+  subscription  Subscription?
+  logs          CompletionLog[]
+
+  // NextAuth relations:
+  accounts Account[]
+  sessions Session[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Habit {
+  id        String         @id @default(cuid())
+  title     String
+  frequency String // e.g. "daily", "weekly"
+  user      User           @relation(fields: [userId], references: [id])
+  userId    String
+  tasks     TaskInstance[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model TaskInstance {
+  id             String          @id @default(cuid())
+  habit          Habit           @relation(fields: [habitId], references: [id])
+  habitId        String
+  scheduledAt    DateTime
+  isCompleted    Boolean         @default(false)
+  nextAction     String? // the 2-step AI instruction
+  completionLogs CompletionLog[]
+
+  @@unique([habitId, scheduledAt])
+}
+
+model CompletionLog {
+  id             String       @id @default(cuid())
+  user           User         @relation(fields: [userId], references: [id])
+  userId         String
+  taskInstance   TaskInstance @relation(fields: [taskInstanceId], references: [id])
+  taskInstanceId String
+  completedAt    DateTime     @default(now())
+}
+
+model Subscription {
+  id                   String @id @default(cuid())
+  user                 User   @relation(fields: [userId], references: [id])
+  userId               String @unique
+  stripeCustomerId     String
+  stripeSubscriptionId String
+  status               String // e.g. "active", "canceled"
+}
