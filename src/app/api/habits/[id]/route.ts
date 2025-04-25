@@ -1,23 +1,21 @@
 // app/api/habits/[id]/route.ts
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
 import { getServerSession } from 'next-auth/next'
-import { authOptions } from '../../auth/[...nextauth]/route'
+import { authOptions } from '../../../../../lib/auth'
 import { prisma } from '../../../../../lib/prisma'
 
-export async function GET(
-    request: Request,
-    { params }: { params: { id: string } }
-) {
+// @ts-ignore
+export async function GET(request: NextRequest, { params }) {
+    const rawId = params.id
+    const id = Array.isArray(rawId) ? rawId[0] : rawId
+
     const session = await getServerSession(authOptions)
     if (!session?.user?.email) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const habit = await prisma.habit.findFirst({
-        where: {
-            id: params.id,
-            user: { email: session.user.email },
-        },
+        where: { id, user: { email: session.user.email } },
     })
     if (!habit) {
         return NextResponse.json({ error: 'Not Found' }, { status: 404 })
@@ -25,10 +23,11 @@ export async function GET(
     return NextResponse.json(habit)
 }
 
-export async function PUT(
-    request: Request,
-    { params }: { params: { id: string } }
-) {
+// @ts-ignore
+export async function PUT(request: NextRequest, { params }) {
+    const rawId = params.id
+    const id = Array.isArray(rawId) ? rawId[0] : rawId
+
     const session = await getServerSession(authOptions)
     if (!session?.user?.email) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -41,44 +40,32 @@ export async function PUT(
     }
 
     const result = await prisma.habit.updateMany({
-        where: {
-            id: params.id,
-            user: { email: session.user.email },
-        },
-        data: {
-            ...(title ? { title } : {}),
-            ...(frequency ? { frequency } : {}),
-        },
+        where: { id, user: { email: session.user.email } },
+        data: { ...(title && { title }), ...(frequency && { frequency }) },
     })
-
     if (result.count === 0) {
-        return NextResponse.json({ error: 'Habit not found' }, { status: 404 })
+        return NextResponse.json({ error: 'Not Found' }, { status: 404 })
     }
 
-    const updated = await prisma.habit.findUnique({
-        where: { id: params.id },
-    })
+    const updated = await prisma.habit.findUnique({ where: { id } })
     return NextResponse.json(updated)
 }
 
-export async function DELETE(
-    request: Request,
-    { params }: { params: { id: string } }
-) {
+// @ts-ignore
+export async function DELETE(request: NextRequest, { params }) {
+    const rawId = params.id
+    const id = Array.isArray(rawId) ? rawId[0] : rawId
+
     const session = await getServerSession(authOptions)
     if (!session?.user?.email) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const result = await prisma.habit.deleteMany({
-        where: {
-            id: params.id,
-            user: { email: session.user.email },
-        },
+    const deleted = await prisma.habit.deleteMany({
+        where: { id, user: { email: session.user.email } },
     })
-
-    if (result.count === 0) {
-        return NextResponse.json({ error: 'Habit not found' }, { status: 404 })
+    if (deleted.count === 0) {
+        return NextResponse.json({ error: 'Not Found' }, { status: 404 })
     }
 
     return NextResponse.json(null, { status: 204 })
