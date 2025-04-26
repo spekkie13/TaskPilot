@@ -3,7 +3,6 @@
 
 import { useEffect, useState } from 'react'
 import useSWR                  from 'swr'
-import { loadStripe }          from '@stripe/stripe-js'
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
@@ -24,9 +23,6 @@ export default function BillingPageClient({ success, canceled }: Props) {
     const [checkoutLoading, setCheckoutLoading] = useState(false)
     const [cancelLoading, setCancelLoading]     = useState(false)
     const [msg, setMsg]                         = useState<string | null>(null)
-    const stripePromise = loadStripe(
-        process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
-    )
 
     // 2) Immediate UI override on success/cancel
     useEffect(() => {
