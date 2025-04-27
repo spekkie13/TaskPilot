@@ -53,20 +53,16 @@ export async function PUT(request: NextRequest, { params }) {
 
 // @ts-ignore
 export async function DELETE(request: NextRequest, { params }) {
-    const rawId = params.id
-    const id = Array.isArray(rawId) ? rawId[0] : rawId
-
+    const rawId = await params.id
+    let id = Array.isArray(rawId) ? rawId[0] : rawId
     const session = await getServerSession(authOptions)
     if (!session?.user?.email) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const deleted = await prisma.habit.deleteMany({
-        where: { id, user: { email: session.user.email } },
+    await prisma.habit.delete({
+        where: { id: rawId },
     })
-    if (deleted.count === 0) {
-        return NextResponse.json({ error: 'Not Found' }, { status: 404 })
-    }
 
-    return NextResponse.json(null, { status: 204 })
+    return new NextResponse(null, { status: 200 })
 }

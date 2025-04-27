@@ -13,7 +13,6 @@ model User {
   email         String?         @unique
   emailVerified DateTime?
   image         String?
-  // Your other fields…
   habits        Habit[]
   subscription  Subscription?
   logs          CompletionLog[]
@@ -24,6 +23,17 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Subscription {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id])
+  stripeCustomerId      String
+  stripeSubscriptionId  String   @unique
+  status                String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }
 
 model Account {
@@ -75,7 +85,7 @@ model Habit {
 
 model TaskInstance {
   id             String          @id @default(cuid())
-  habit          Habit           @relation(fields: [habitId], references: [id])
+  habit          Habit           @relation(fields: [habitId], references: [id], onDelete: Cascade)
   habitId        String
   scheduledAt    DateTime
   isCompleted    Boolean         @default(false)
@@ -89,16 +99,7 @@ model CompletionLog {
   id             String       @id @default(cuid())
   user           User         @relation(fields: [userId], references: [id])
   userId         String
-  taskInstance   TaskInstance @relation(fields: [taskInstanceId], references: [id])
+  taskInstance   TaskInstance @relation(fields: [taskInstanceId], references: [id], onDelete: Cascade)
   taskInstanceId String
   completedAt    DateTime     @default(now())
-}
-
-model Subscription {
-  id                   String @id @default(cuid())
-  user                 User   @relation(fields: [userId], references: [id])
-  userId               String @unique
-  stripeCustomerId     String @unique
-  stripeSubscriptionId String
-  status               String // e.g. "active", "canceled"
 }

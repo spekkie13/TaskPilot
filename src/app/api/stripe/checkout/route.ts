@@ -1,8 +1,8 @@
 // app/api/stripe/checkout/route.ts
 import { NextResponse, NextRequest } from 'next/server'
-import { stripe }              from '../../../../../lib/stripe'
-import { getServerSession }    from 'next-auth/next'
-import { authOptions }         from '../../../../../lib/auth'
+import { getServerSession }         from 'next-auth/next'
+import { authOptions }              from '../../../../../lib/auth'
+import { stripe }                   from '../../../../../lib/stripe'
 
 export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions)
